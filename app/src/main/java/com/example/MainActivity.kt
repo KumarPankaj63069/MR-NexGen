@@ -1,5 +1,7 @@
 package com.example
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -13,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import com.example.data.model.UserRole
 import com.example.ui.components.AdminBottomNavigation
+import com.example.ui.components.AppUpdateDialog
 import com.example.ui.components.CompanyBottomNavigation
 import com.example.ui.components.CompanyTopBar
 import com.example.ui.navigation.Screen
@@ -34,6 +37,9 @@ class MainActivity : ComponentActivity() {
             val currentUser by viewModel.currentUser.collectAsState()
             val unreadNotifs by viewModel.unreadNotificationsCount.collectAsState()
             val toastMessage by viewModel.toastMessage.collectAsState()
+            val showUpdateDialog by viewModel.showUpdateDialog.collectAsState()
+            val isForceUpdate by viewModel.isForceUpdate.collectAsState()
+            val appVersionInfo by viewModel.appVersionInfo.collectAsState()
             val snackbarHostState = remember { SnackbarHostState() }
 
             LaunchedEffect(toastMessage) {
@@ -49,6 +55,31 @@ class MainActivity : ComponentActivity() {
             }
 
             MyApplicationTheme(darkTheme = isDark) {
+                // Application Update Dialog
+                if (showUpdateDialog) {
+                    AppUpdateDialog(
+                        isForceUpdate = isForceUpdate,
+                        versionInfo = appVersionInfo,
+                        onUpdateClick = {
+                            val pkg = com.example.BuildConfig.APPLICATION_ID
+                            try {
+                                val marketIntent = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$pkg")).apply {
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
+                                    setPackage("com.android.vending")
+                                }
+                                startActivity(marketIntent)
+                            } catch (e: Exception) {
+                                val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$pkg")).apply {
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
+                                startActivity(webIntent)
+                            }
+                        },
+                        onLaterClick = {
+                            viewModel.dismissUpdateDialog()
+                        }
+                    )
+                }
                 val isSplashOrOnboarding = currentScreen is Screen.Splash || currentScreen is Screen.Onboarding
                 val isAdminScreen = currentScreen is Screen.AdminDashboard ||
                         currentScreen is Screen.AdminRequests ||

@@ -886,6 +886,33 @@ class MrNexGenRepository(private val db: AppDatabase) {
         )
     )
 
+    // --- APP VERSION POLICY ---
+    private var cachedVersionInfo: AppVersionInfo = AppVersionInfo(
+        latestVersion = "1.0.0",
+        latestVersionCode = 1,
+        minimumSupportedVersionCode = 1,
+        minimumSupportedVersion = "1.0.0",
+        updateUrl = "market://details?id=com.mrnexgen.app",
+        playStoreWebUrl = "https://play.google.com/store/apps/details?id=com.mrnexgen.app",
+        forceUpdate = false,
+        releaseNotes = "Initial production release of MR NexGen IT Services Android application."
+    )
+
+    suspend fun getAppVersionPolicy(): AppVersionInfo {
+        return cachedVersionInfo
+    }
+
+    suspend fun updateAppVersionPolicy(newPolicy: AppVersionInfo, admin: User) {
+        cachedVersionInfo = newPolicy
+        logAdminAction(
+            admin.id,
+            admin.name,
+            "UPDATE_APP_VERSION_POLICY",
+            "v${newPolicy.latestVersion}",
+            "MinCode: ${newPolicy.minimumSupportedVersionCode}, Force: ${newPolicy.forceUpdate}"
+        )
+    }
+
     private suspend fun logAdminAction(
         adminId: String,
         adminName: String,

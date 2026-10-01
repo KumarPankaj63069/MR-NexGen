@@ -165,3 +165,21 @@ CREATE TABLE IF NOT EXISTS admin_audit_logs (
     details TEXT DEFAULT '',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- 11. Application Version Control & Remote Updates
+CREATE TABLE IF NOT EXISTS app_versions (
+    id VARCHAR(64) PRIMARY KEY,
+    latest_version VARCHAR(20) NOT NULL,
+    latest_version_code INT NOT NULL,
+    minimum_supported_version_code INT NOT NULL,
+    minimum_supported_version VARCHAR(20) NOT NULL,
+    update_url TEXT NOT NULL,
+    play_store_web_url TEXT NOT NULL,
+    force_update BOOLEAN NOT NULL DEFAULT 0,
+    release_notes TEXT DEFAULT '',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT OR IGNORE INTO app_versions (id, latest_version, latest_version_code, minimum_supported_version_code, minimum_supported_version, update_url, play_store_web_url, force_update, release_notes)
+VALUES ('current', '1.0.0', 1, 1, '1.0.0', 'market://details?id=com.mrnexgen.app', 'https://play.google.com/store/apps/details?id=com.mrnexgen.app', 0, 'Initial release for MR NexGen IT Services.');
+

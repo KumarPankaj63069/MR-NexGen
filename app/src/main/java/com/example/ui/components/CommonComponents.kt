@@ -28,6 +28,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
+import com.example.data.model.AppVersionInfo
 import com.example.data.model.BlogPost
 import com.example.data.model.PortfolioItem
 import com.example.data.model.RequestStatus
@@ -861,4 +862,134 @@ private fun DashboardSummaryCard(
         }
     }
 }
+
+/**
+ * Standard Google Play / Enterprise Update Dialog
+ * Handles both non-blocking updates (Update Now / Later)
+ * and mandatory force updates (Update Required / Update Now only)
+ */
+@Composable
+fun AppUpdateDialog(
+    isForceUpdate: Boolean,
+    versionInfo: AppVersionInfo,
+    onUpdateClick: () -> Unit,
+    onLaterClick: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = {
+            if (!isForceUpdate) {
+                onLaterClick()
+            }
+        },
+        shape = RoundedCornerShape(20.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
+        icon = {
+            Box(
+                modifier = Modifier
+                    .size(52.dp)
+                    .background(
+                        if (isForceUpdate) Color(0xFFEF4444).copy(alpha = 0.12f) else NexGenCyan.copy(alpha = 0.15f),
+                        CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = if (isForceUpdate) Icons.Default.SystemUpdateAlt else Icons.Default.CloudDownload,
+                    contentDescription = "App Update Icon",
+                    tint = if (isForceUpdate) Color(0xFFEF4444) else NexGenNavy,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+        },
+        title = {
+            Text(
+                text = if (isForceUpdate) "Update Required" else "New Update Available",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        },
+        text = {
+            Column(modifier = Modifier.fillMaxWidth().testTag("app_update_dialog")) {
+                Text(
+                    text = if (isForceUpdate) {
+                        "A required update to MR NexGen (Version ${versionInfo.latestVersion}) is required to continue using this application securely."
+                    } else {
+                        "A new version of MR NexGen is available with improvements and new features."
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = 20.sp
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Surface(
+                    color = NexGenSurfaceVariant,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "Available Version:",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = NexGenTextSecondary
+                            )
+                            Text(
+                                text = "v${versionInfo.latestVersion} (Build ${versionInfo.latestVersionCode})",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = NexGenNavy
+                            )
+                        }
+
+                        if (versionInfo.releaseNotes.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "What's New:",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = NexGenTextSecondary
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = versionInfo.releaseNotes,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onUpdateClick,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isForceUpdate) Color(0xFFEF4444) else NexGenNavy
+                ),
+                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier.testTag("update_now_btn")
+            ) {
+                Text("Update Now", fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            if (!isForceUpdate) {
+                TextButton(
+                    onClick = onLaterClick,
+                    modifier = Modifier.testTag("update_later_btn")
+                ) {
+                    Text("Later", color = NexGenTextSecondary, fontWeight = FontWeight.Medium)
+                }
+            }
+        }
+    )
+}
+
 

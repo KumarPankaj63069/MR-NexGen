@@ -40,8 +40,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     _authToken.value = savedToken ?: "persisted_token"
                 }
             }
+            // Check for application updates on startup
+            checkForAppUpdates(isManual = false)
         }
     }
+
+    // Version Management & Remote Update State
+    private val _appVersionInfo = MutableStateFlow(AppVersionInfo())
+    val appVersionInfo: StateFlow<AppVersionInfo> = _appVersionInfo.asStateFlow()
+
+    private val _showUpdateDialog = MutableStateFlow(false)
+    val showUpdateDialog: StateFlow<Boolean> = _showUpdateDialog.asStateFlow()
+
+    private val _isForceUpdate = MutableStateFlow(false)
+    val isForceUpdate: StateFlow<Boolean> = _isForceUpdate.asStateFlow()
+
+    private val _isCheckingUpdate = MutableStateFlow(false)
+    val isCheckingUpdate: StateFlow<Boolean> = _isCheckingUpdate.asStateFlow()
 
     // Global Selected Items
     private val _selectedService = MutableStateFlow<ServiceItem?>(null)
@@ -607,4 +622,70 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _toastMessage.value = if (isActive) "User account activated" else "User account deactivated"
         }
     }
+
+    // --- APPLICATION UPDATE & VERSIONING ---
+    fun dismissUpdateDialog() {
+        if (!_isForceUpdate.value) {
+            _showUpdateDialog.value = false
+        }
+    }
+
+    fun checkForAppUpdates(isManual: Boolean = false) {
+        viewModelScope.launch {
+            _isCheckingUpdate.value = true
+            try {
+                val policy = repository.getAppVersionPolicy()
+                _appVersionInfo.value = policy
+                val currentCode = com.example.BuildConfig.VERSION_CODE
+                if (policy.forceUpdate || currentCode < policy.minimumSupportedVersionCode) {
+                    _isForceUpdate.value = true
+                    _showUpdateDialog.value = true
+                } else if (policy.latestVersionCode > currentCode) {
+                    _isForceUpdate.value = false
+                    _showUpdateDialog.value = true
+                } else if (isManual) {
+                    _toastMessage.value = "MR NexGen is up to date (Version ${com.example.BuildConfig.VERSION_NAME})"
+                }
+            } catch (e: Exception) {
+                if (isManual) {
+                    _toastMessage.value = "Unable to check updates. Please try again later."
+                }
+            } finally {
+                _isCheckingUpdate.value = false
+            }
+        }
+    }
+
+    /**
+     * Demo / testing utility to simulate a remote backend version update trigger
+     */
+    fun simulateRemoteUpdateCheck(
+        latestVersion: String = "1.0.1",
+        latestVersionCode: Int = 2,
+        minimumSupportedVersionCode: Int = 1,
+        forceUpdate: Boolean = false
+    ) {
+        viewModelScope.launch {
+            val policy = AppVersionInfo(
+                latestVersion = latestVersion,
+                latestVersionCode = latestVersionCode,
+                minimumSupportedVersionCode = minimumSupportedVersionCode,
+                minimumSupportedVersion = if (forceUpdate) latestVersion else "1.0.0",
+                updateUrl = "market://details?id=${com.example.BuildConfig.APPLICATION_ID}",
+                playStoreWebUrl = "https://play.google.com/store/apps/details?id=${com.example.BuildConfig.APPLICATION_ID}",
+                forceUpdate = forceUpdate,
+                releaseNotes = "New certified internship features, faster response ticketing, and UI optimizations."
+            )
+            _appVersionInfo.value = policy
+            val currentCode = com.example.BuildConfig.VERSION_CODE
+            if (policy.forceUpdate || currentCode < policy.minimumSupportedVersionCode) {
+                _isForceUpdate.value = true
+                _showUpdateDialog.value = true
+            } else if (policy.latestVersionCode > currentCode) {
+                _isForceUpdate.value = false
+                _showUpdateDialog.value = true
+            }
+        }
+    }
 }
+

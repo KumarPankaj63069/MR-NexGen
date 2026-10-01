@@ -192,3 +192,15 @@ data class AuthResponse(
     val token: String? = null,
     val verificationOtp: String? = null // Provided for demo/testing display convenience
 )
+
+data class AppVersionInfo(
+    val latestVersion: String = "1.0.0",
+    val latestVersionCode: Int = 1,
+    val minimumSupportedVersionCode: Int = 1,
+    val minimumSupportedVersion: String = "1.0.0",
+    val updateUrl: String = "market://details?id=com.mrnexgen.app",
+    val playStoreWebUrl: String = "https://play.google.com/store/apps/details?id=com.mrnexgen.app",
+    val forceUpdate: Boolean = false,
+    val releaseNotes: String = "",
+    val checkedAt: Long = System.currentTimeMillis()
+)

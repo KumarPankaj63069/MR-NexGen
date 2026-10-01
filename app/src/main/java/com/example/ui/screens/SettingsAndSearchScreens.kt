@@ -101,20 +101,125 @@ fun SettingsScreen(viewModel: MainViewModel) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // App Meta Info
+        // --- ABOUT APP SECTION ---
+        Text("About App", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(10.dp))
+
         Card(
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = NexGenSurfaceVariant),
-            modifier = Modifier.fillMaxWidth()
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            modifier = Modifier.fillMaxWidth().testTag("about_app_card")
         ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text("MR NexGen IT Services Android Client", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
-                Spacer(modifier = Modifier.height(4.dp))
-                Text("Version 1.0.0 (Enterprise Release)", color = NexGenTextSecondary, style = MaterialTheme.typography.bodySmall)
-                Text("Built with Jetpack Compose & Clean Architecture", color = NexGenTextMuted, style = MaterialTheme.typography.labelSmall)
+            Column(modifier = Modifier.padding(18.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        color = NexGenNavy.copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.size(52.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                Icons.Default.PhoneAndroid,
+                                contentDescription = "Device icon",
+                                tint = NexGenNavy,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(14.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "MR NexGen",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Version ${com.example.BuildConfig.VERSION_NAME}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = NexGenCyanDark,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "Build ${com.example.BuildConfig.VERSION_CODE} • ${com.example.BuildConfig.APPLICATION_ID}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = NexGenTextSecondary
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+                Divider(color = NexGenBorder)
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Release Channel",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "Google Play Distribution",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = NexGenTextSecondary
+                        )
+                    }
+
+                    OutlinedButton(
+                        onClick = { viewModel.checkForAppUpdates(isManual = true) },
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.testTag("check_updates_btn")
+                    ) {
+                        Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Check for Updates", fontSize = 12.sp)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Development & Review testing simulation affordances
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    TextButton(
+                        onClick = {
+                            viewModel.simulateRemoteUpdateCheck(
+                                latestVersion = "1.0.1",
+                                latestVersionCode = 2,
+                                minimumSupportedVersionCode = 1,
+                                forceUpdate = false
+                            )
+                        },
+                        modifier = Modifier.testTag("simulate_update_btn")
+                    ) {
+                        Text("Simulate Update", fontSize = 11.sp, color = NexGenNavy)
+                    }
+
+                    TextButton(
+                        onClick = {
+                            viewModel.simulateRemoteUpdateCheck(
+                                latestVersion = "2.0.0",
+                                latestVersionCode = 5,
+                                minimumSupportedVersionCode = 2,
+                                forceUpdate = true
+                            )
+                        },
+                        modifier = Modifier.testTag("simulate_force_update_btn")
+                    ) {
+                        Text("Simulate Force Update", fontSize = 11.sp, color = Color(0xFFEF4444))
+                    }
+                }
             }
         }
     }

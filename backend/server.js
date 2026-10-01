@@ -241,6 +241,71 @@ app.put('/api/admin/requests/:id/status', authenticateToken, requireAdmin, (req,
   });
 });
 
+// --- APPLICATION VERSION POLICY & REMOTE UPDATE ---
+app.get('/api/app/version', (req, res) => {
+  db.get('SELECT * FROM app_versions WHERE id = ?', ['current'], (err, row) => {
+    if (err) return res.status(500).json({ success: false, message: err.message });
+    if (!row) {
+      return res.json({
+        success: true,
+        data: {
+          latestVersion: "1.0.0",
+          latestVersionCode: 1,
+          minimumSupportedVersionCode: 1,
+          minimumSupportedVersion: "1.0.0",
+          updateUrl: "market://details?id=com.mrnexgen.app",
+          playStoreWebUrl: "https://play.google.com/store/apps/details?id=com.mrnexgen.app",
+          forceUpdate: false,
+          releaseNotes: "Initial official release of MR NexGen"
+        }
+      });
+    }
+    res.json({
+      success: true,
+      data: {
+        latestVersion: row.latest_version,
+        latestVersionCode: row.latest_version_code,
+        minimumSupportedVersionCode: row.minimum_supported_version_code,
+        minimumSupportedVersion: row.minimum_supported_version,
+        updateUrl: row.update_url,
+        playStoreWebUrl: row.play_store_web_url,
+        forceUpdate: Boolean(row.force_update),
+        releaseNotes: row.release_notes
+      }
+    });
+  });
+});
+
+app.put('/api/admin/app/version', authenticateToken, requireAdmin, (req, res) => {
+  const { latestVersion, latestVersionCode, minimumSupportedVersionCode, minimumSupportedVersion, updateUrl, forceUpdate, releaseNotes } = req.body;
+  db.run(`
+    INSERT INTO app_versions (id, latest_version, latest_version_code, minimum_supported_version_code, minimum_supported_version, update_url, play_store_web_url, force_update, release_notes, updated_at)
+    VALUES ('current', ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    ON CONFLICT(id) DO UPDATE SET
+      latest_version = excluded.latest_version,
+      latest_version_code = excluded.latest_version_code,
+      minimum_supported_version_code = excluded.minimum_supported_version_code,
+      minimum_supported_version = excluded.minimum_supported_version,
+      update_url = excluded.update_url,
+      play_store_web_url = excluded.play_store_web_url,
+      force_update = excluded.force_update,
+      release_notes = excluded.release_notes,
+      updated_at = CURRENT_TIMESTAMP
+  `, [
+    latestVersion || '1.0.0',
+    latestVersionCode || 1,
+    minimumSupportedVersionCode || 1,
+    minimumSupportedVersion || '1.0.0',
+    updateUrl || 'market://details?id=com.mrnexgen.app',
+    'https://play.google.com/store/apps/details?id=com.mrnexgen.app',
+    forceUpdate ? 1 : 0,
+    releaseNotes || ''
+  ], function (err) {
+    if (err) return res.status(500).json({ success: false, message: err.message });
+    res.json({ success: true, message: 'App version policy updated successfully' });
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`MR NexGen IT Services REST API running on port ${PORT}`);
 });
